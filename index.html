@@ -1,1 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequential Game Solver - SPNE Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .control-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            height: fit-content;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        select, textarea, input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, textarea:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .visualization-area {
+            background: white;
+        }
+
+        .results {
+            background: #f0f7ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .results h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .results-content {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .equilibrium-path {
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border-left: 3px solid #28a745;
+        }
+
+        .payoffs {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border-left: 3px solid #ffc107;
+        }
+
+        #gameTree {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: #667eea;
+        }
+
+        .game-description {
+            background: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #555;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Sequential Game Solver</h1>
+            <p>Subgame Perfect Nash Equilibrium (SPNE) Calculator using Backward Induction</p>
+        </header>
+
+        <div class="content">
+            <div class="control-panel">
+                <div class="section">
+                    <h3>Select Game</h3>
+                    <label for="gameSelect">Choose a canonical game:</label>
+                    <select id="gameSelect">
+                        <option value="">-- Select a Game --</option>
+                        <option value="centipede">Centipede Game</option>
+                        <option value="entryDeterrence">Entry Deterrence (Selten Game)</option>
+                        <option value="stackelberg">Stackelberg Duopoly</option>
+                        <option value="ultimatum">Ultimatum Game (Simple)</option>
+                    </select>
+                    <div id="gameDescription" class="game-description" style="display: none;"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Custom Game Input</h3>
+                    <div class="info-box">
+                        <strong>JSON Format:</strong> Define game tree structure with nodes containing: id, player, actions (object mapping action names to child node ids), and payoffs for terminal nodes.
+                    </div>
+                    <label for="customGame">Paste custom game (JSON):</label>
+                    <textarea id="customGame" placeholder='Example:
+{
+  "root": {
+    "id": "root",
+    "player": "P1",
+    "actions": {
+      "Left": "terminal1",
+      "Right": "terminal2"
+    }
+  },
+  "terminal1": {
+    "id": "terminal1",
+    "payoffs": [3, 1]
+  },
+  "terminal2": {
+    "id": "terminal2",
+    "payoffs": [1, 3]
+  }
+}'></textarea>
+                </div>
+
+                <div class="section">
+                    <button id="solveBtn">🎯 Solve for SPNE</button>
+                </div>
+            </div>
+
+            <div class="visualization-area">
+                <div id="resultsContainer" style="display: none;">
+                    <div class="results">
+                        <h3>📊 Equilibrium Results</h3>
+                        <div id="resultsContent" class="results-content"></div>
+                    </div>
+                </div>
+                <div id="errorContainer" style="display: none;">
+                    <div class="error">
+                        <strong>Error:</strong> <span id="errorMessage"></span>
+                    </div>
+                </div>
+                <svg id="gameTree"></svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // CANONICAL GAMES REGISTRY
+        // ========================================
+
+        const CANONICAL_GAMES = {
+            centipede: {
+                name: "Centipede Game",
+                description: "A classic sequential game where two players alternate choosing to take (T) a larger share or pass (P) to give the other player a chance. The pot grows each round, but taking ends the game.",
+                tree: {
+                    "n1": {
+                        id: "n1",
+                        player: "P1",
+                        actions: {
+                            "Take": "t1",
+                            "Pass": "n2"
+                        }
+                    },
+                    "n2": {
+                        id: "n2",
+                        player: "P2",
+                        actions: {
+                            "Take": "t2",
+                            "Pass": "n3"
+                        }
+                    },
+                    "n3": {
+                        id: "n3",
+                        player: "P1",
+                        actions: {
+                            "Take": "t3",
+                            "Pass": "n4"
+                        }
+                    },
+                    "n4": {
+                        id: "n4",
+                        player: "P2",
+                        actions: {
+                            "Take": "t4",
+                            "Pass": "t5"
+                        }
+                    },
+                    "t1": { id: "t1", payoffs: [1, 0] },
+                    "t2": { id: "t2", payoffs: [0, 2] },
+                    "t3": { id: "t3", payoffs: [3, 1] },
+                    "t4": { id: "t4", payoffs: [2, 4] },
+                    "t5": { id: "t5", payoffs: [4, 3] }
+                },
+                rootId: "n1"
+            },
+
+            entryDeterrence: {
+                name: "Entry Deterrence (Selten Game)",
+                description: "Incumbent firm (P2) decides whether to fight or accommodate if Entrant (P1) enters the market. Demonstrates credible vs. non-credible threats in sequential games.",
+                tree: {
+                    "entry": {
+                        id: "entry",
+                        player: "Entrant",
+                        actions: {
+                            "Enter": "incumbent",
+                            "Stay Out": "stayOut"
+                        }
+                    },
+                    "incumbent": {
+                        id: "incumbent",
+                        player: "Incumbent",
+                        actions: {
+                            "Fight": "fight",
+                            "Accommodate": "accommodate"
+                        }
+                    },
+                    "stayOut": { id: "stayOut", payoffs: [0, 5] },
+                    "fight": { id: "fight", payoffs: [-1, -1] },
+                    "accommodate": { id: "accommodate", payoffs: [2, 2] }
+                },
+                rootId: "entry"
+            },
+
+            stackelberg: {
+                name: "Stackelberg Duopoly",
+                description: "Leader firm chooses quantity first, then Follower responds. Simplified version with discrete quantities (High/Low).",
+                tree: {
+                    "leader": {
+                        id: "leader",
+                        player: "Leader",
+                        actions: {
+                            "High": "follower_lh",
+                            "Low": "follower_ll"
+                        }
+                    },
+                    "follower_lh": {
+                        id: "follower_lh",
+                        player: "Follower",
+                        actions: {
+                            "High": "t_hh",
+                            "Low": "t_hl"
+                        }
+                    },
+                    "follower_ll": {
+                        id: "follower_ll",
+                        player: "Follower",
+                        actions: {
+                            "High": "t_lh",
+                            "Low": "t_ll"
+                        }
+                    },
+                    "t_hh": { id: "t_hh", payoffs: [2, 2] },
+                    "t_hl": { id: "t_hl", payoffs: [4, 1] },
+                    "t_lh": { id: "t_lh", payoffs: [1, 4] },
+                    "t_ll": { id: "t_ll", payoffs: [3, 3] }
+                },
+                rootId: "leader"
+            },
+
+            ultimatum: {
+                name: "Ultimatum Game (Simple)",
+                description: "P1 proposes a split of $10. P2 can accept or reject. If rejected, both get nothing.",
+                tree: {
+                    "proposer": {
+                        id: "proposer",
+                        player: "Proposer",
+                        actions: {
+                            "Fair (5,5)": "responder_fair",
+                            "Unfair (8,2)": "responder_unfair",
+                            "Greedy (9,1)": "responder_greedy"
+                        }
+                    },
+                    "responder_fair": {
+                        id: "responder_fair",
+                        player: "Responder",
+                        actions: {
+                            "Accept": "t_fair_accept",
+                            "Reject": "t_fair_reject"
+                        }
+                    },
+                    "responder_unfair": {
+                        id: "responder_unfair",
+                        player: "Responder",
+                        actions: {
+                            "Accept": "t_unfair_accept",
+                            "Reject": "t_unfair_reject"
+                        }
+                    },
+                    "responder_greedy": {
+                        id: "responder_greedy",
+                        player: "Responder",
+                        actions: {
+                            "Accept": "t_greedy_accept",
+                            "Reject": "t_greedy_reject"
+                        }
+                    },
+                    "t_fair_accept": { id: "t_fair_accept", payoffs: [5, 5] },
+                    "t_fair_reject": { id: "t_fair_reject", payoffs: [0, 0] },
+                    "t_unfair_accept": { id: "t_unfair_accept", payoffs: [8, 2] },
+                    "t_unfair_reject": { id: "t_unfair_reject", payoffs: [0, 0] },
+                    "t_greedy_accept": { id: "t_greedy_accept", payoffs: [9, 1] },
+                    "t_greedy_reject": { id: "t_greedy_reject", payoffs: [0, 0] }
+                },
+                rootId: "proposer"
+            }
+        };
+
+        // ========================================
+        // GAME STATE
+        // ========================================
+
+        let currentGame = null;
+        let currentRootId = null;
+        let equilibriumSolution = null;
+
+        // ========================================
+        // BACKWARD INDUCTION ALGORITHM
+        // ========================================
+
+        function solveBackwardInduction(gameTree, rootId) {
+            const solution = {
+                strategies: {},
+                values: {},
+                equilibriumPath: [],
+                terminalPayoffs: null
+            };
+
+            // Recursive function to compute node values and optimal actions
+            function computeNodeValue(nodeId) {
+                const node = gameTree[nodeId];
+
+                // Base case: terminal node
+                if (node.payoffs) {
+                    solution.values[nodeId] = node.payoffs;
+                    return node.payoffs;
+                }
+
+                // Recursive case: decision node
+                const player = node.player;
+                const playerIndex = getPlayerIndex(player);
+
+                let bestAction = null;
+                let bestValue = null;
+                let bestPayoffs = null;
+
+                // Evaluate each action
+                for (const [action, nextNodeId] of Object.entries(node.actions)) {
+                    const nextPayoffs = computeNodeValue(nextNodeId);
+
+                    // Player chooses action that maximizes their payoff
+                    if (bestValue === null || nextPayoffs[playerIndex] > bestValue) {
+                        bestValue = nextPayoffs[playerIndex];
+                        bestAction = action;
+                        bestPayoffs = nextPayoffs;
+                    }
+                }
+
+                solution.strategies[nodeId] = bestAction;
+                solution.values[nodeId] = bestPayoffs;
+
+                return bestPayoffs;
+            }
+
+            // Compute solution starting from root
+            const finalPayoffs = computeNodeValue(rootId);
+            solution.terminalPayoffs = finalPayoffs;
+
+            // Trace equilibrium path
+            function tracePath(nodeId) {
+                const node = gameTree[nodeId];
+
+                if (node.payoffs) {
+                    return [{ nodeId, type: 'terminal', payoffs: node.payoffs }];
+                }
+
+                const action = solution.strategies[nodeId];
+                const nextNodeId = node.actions[action];
+
+                return [
+                    { nodeId, player: node.player, action },
+                    ...tracePath(nextNodeId)
+                ];
+            }
+
+            solution.equilibriumPath = tracePath(rootId);
+
+            return solution;
+        }
+
+        function getPlayerIndex(player) {
+            // Extract player number or use mapping
+            if (player.includes('1') || player.toLowerCase().includes('p1') ||
+                player.toLowerCase().includes('entrant') ||
+                player.toLowerCase().includes('proposer') ||
+                player.toLowerCase().includes('leader')) {
+                return 0;
+            }
+            return 1;
+        }
+
+        // ========================================
+        // VISUALIZATION
+        // ========================================
+
+        function visualizeGameTree(gameTree, rootId, solution) {
+            const svg = document.getElementById('gameTree');
+            const width = svg.clientWidth;
+            const height = svg.clientHeight;
+
+            // Clear previous content
+            svg.innerHTML = '';
+
+            // Create tree layout
+            const layout = createTreeLayout(gameTree, rootId, width, height);
+
+            // Draw edges first (so they appear behind nodes)
+            drawEdges(svg, layout, gameTree, solution);
+
+            // Draw nodes
+            drawNodes(svg, layout, gameTree, solution);
+
+            // Add legend
+            addLegend(svg, width);
+        }
+
+        function createTreeLayout(gameTree, rootId, width, height) {
+            const layout = {};
+            const levels = {};
+
+            // BFS to assign levels
+            const queue = [{ id: rootId, level: 0 }];
+            const visited = new Set();
+
+            while (queue.length > 0) {
+                const { id, level } = queue.shift();
+
+                if (visited.has(id)) continue;
+                visited.add(id);
+
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(id);
+
+                const node = gameTree[id];
+                if (node.actions) {
+                    for (const nextId of Object.values(node.actions)) {
+                        queue.push({ id: nextId, level: level + 1 });
+                    }
+                }
+            }
+
+            // Assign positions
+            const maxLevel = Math.max(...Object.keys(levels).map(Number));
+            const verticalSpacing = (height - 100) / Math.max(maxLevel, 1);
+
+            for (const [level, nodes] of Object.entries(levels)) {
+                const levelNum = Number(level);
+                const horizontalSpacing = width / (nodes.length + 1);
+
+                nodes.forEach((nodeId, index) => {
+                    layout[nodeId] = {
+                        x: horizontalSpacing * (index + 1),
+                        y: 50 + verticalSpacing * levelNum
+                    };
+                });
+            }
+
+            return layout;
+        }
+
+        function drawEdges(svg, layout, gameTree, solution) {
+            const equilibriumNodes = new Set(
+                solution.equilibriumPath.map(step => step.nodeId)
+            );
+
+            for (const [nodeId, node] of Object.entries(gameTree)) {
+                if (!node.actions) continue;
+
+                const fromPos = layout[nodeId];
+                const optimalAction = solution.strategies[nodeId];
+
+                for (const [action, toNodeId] of Object.entries(node.actions)) {
+                    const toPos = layout[toNodeId];
+                    const isOptimal = action === optimalAction;
+
+                    // Draw edge
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', fromPos.x);
+                    line.setAttribute('y1', fromPos.y);
+                    line.setAttribute('x2', toPos.x);
+                    line.setAttribute('y2', toPos.y);
+                    line.setAttribute('stroke', isOptimal ? '#28a745' : '#999');
+                    line.setAttribute('stroke-width', isOptimal ? '3' : '1.5');
+                    line.setAttribute('stroke-dasharray', isOptimal ? 'none' : '5,5');
+                    svg.appendChild(line);
+
+                    // Draw action label
+                    const midX = (fromPos.x + toPos.x) / 2;
+                    const midY = (fromPos.y + toPos.y) / 2;
+
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', midX);
+                    text.setAttribute('y', midY - 5);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('font-size', '12');
+                    text.setAttribute('font-weight', isOptimal ? 'bold' : 'normal');
+                    text.setAttribute('fill', isOptimal ? '#28a745' : '#555');
+                    text.textContent = action;
+                    svg.appendChild(text);
+                }
+            }
+        }
+
+        function drawNodes(svg, layout, gameTree, solution) {
+            const equilibriumNodes = new Set(
+                solution.equilibriumPath.map(step => step.nodeId)
+            );
+
+            for (const [nodeId, node] of Object.entries(gameTree)) {
+                const pos = layout[nodeId];
+                const isOnPath = equilibriumNodes.has(nodeId);
+                const isTerminal = !!node.payoffs;
+
+                // Draw node circle
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', pos.x);
+                circle.setAttribute('cy', pos.y);
+                circle.setAttribute('r', isTerminal ? '25' : '20');
+                circle.setAttribute('fill', isTerminal ? '#fff3cd' : (isOnPath ? '#d4edda' : '#e7f3ff'));
+                circle.setAttribute('stroke', isOnPath ? '#28a745' : '#667eea');
+                circle.setAttribute('stroke-width', isOnPath ? '3' : '2');
+                svg.appendChild(circle);
+
+                // Draw node label
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', pos.x);
+                text.setAttribute('y', pos.y + 4);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-size', '11');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('fill', '#333');
+
+                if (isTerminal) {
+                    text.textContent = `(${node.payoffs.join(',')})`;
+                } else {
+                    text.textContent = node.player;
+                }
+
+                svg.appendChild(text);
+            }
+        }
+
+        function addLegend(svg, width) {
+            const legendX = width - 180;
+            const legendY = 20;
+
+            // Optimal path
+            const optLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            optLine.setAttribute('x1', legendX);
+            optLine.setAttribute('y1', legendY);
+            optLine.setAttribute('x2', legendX + 30);
+            optLine.setAttribute('y2', legendY);
+            optLine.setAttribute('stroke', '#28a745');
+            optLine.setAttribute('stroke-width', '3');
+            svg.appendChild(optLine);
+
+            const optText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            optText.setAttribute('x', legendX + 35);
+            optText.setAttribute('y', legendY + 4);
+            optText.setAttribute('font-size', '12');
+            optText.textContent = 'SPNE Path';
+            svg.appendChild(optText);
+
+            // Non-optimal path
+            const nonOptLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            nonOptLine.setAttribute('x1', legendX);
+            nonOptLine.setAttribute('y1', legendY + 20);
+            nonOptLine.setAttribute('x2', legendX + 30);
+            nonOptLine.setAttribute('y2', legendY + 20);
+            nonOptLine.setAttribute('stroke', '#999');
+            nonOptLine.setAttribute('stroke-width', '1.5');
+            nonOptLine.setAttribute('stroke-dasharray', '5,5');
+            svg.appendChild(nonOptLine);
+
+            const nonOptText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            nonOptText.setAttribute('x', legendX + 35);
+            nonOptText.setAttribute('y', legendY + 24);
+            nonOptText.setAttribute('font-size', '12');
+            nonOptText.textContent = 'Other Actions';
+            svg.appendChild(nonOptText);
+        }
+
+        // ========================================
+        // RESULTS DISPLAY
+        // ========================================
+
+        function displayResults(solution) {
+            const resultsContent = document.getElementById('resultsContent');
+
+            let output = '=== SUBGAME PERFECT NASH EQUILIBRIUM ===\n\n';
+
+            output += '📍 EQUILIBRIUM STRATEGY:\n';
+            for (const [nodeId, action] of Object.entries(solution.strategies)) {
+                const node = currentGame[nodeId];
+                output += `  • At node "${nodeId}" (${node.player}): Choose "${action}"\n`;
+            }
+
+            output += '\n🛤️  EQUILIBRIUM PATH:\n';
+            solution.equilibriumPath.forEach((step, index) => {
+                if (step.type === 'terminal') {
+                    output += `  ${index + 1}. Reach terminal node "${step.nodeId}" with payoffs ${JSON.stringify(step.payoffs)}\n`;
+                } else {
+                    output += `  ${index + 1}. ${step.player} chooses "${step.action}" at node "${step.nodeId}"\n`;
+                }
+            });
+
+            output += `\n💰 EQUILIBRIUM PAYOFFS: ${JSON.stringify(solution.terminalPayoffs)}\n`;
+
+            resultsContent.textContent = output;
+            document.getElementById('resultsContainer').style.display = 'block';
+            document.getElementById('errorContainer').style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('resultsContainer').style.display = 'none';
+        }
+
+        // ========================================
+        // UI EVENT HANDLERS
+        // ========================================
+
+        document.getElementById('gameSelect').addEventListener('change', function(e) {
+            const gameKey = e.target.value;
+            const descDiv = document.getElementById('gameDescription');
+
+            if (gameKey && CANONICAL_GAMES[gameKey]) {
+                const game = CANONICAL_GAMES[gameKey];
+                descDiv.innerHTML = `<strong>${game.name}:</strong> ${game.description}`;
+                descDiv.style.display = 'block';
+
+                // Clear custom input
+                document.getElementById('customGame').value = '';
+            } else {
+                descDiv.style.display = 'none';
+            }
+        });
+
+        document.getElementById('solveBtn').addEventListener('click', function() {
+            try {
+                const gameKey = document.getElementById('gameSelect').value;
+                const customInput = document.getElementById('customGame').value.trim();
+
+                if (customInput) {
+                    // Parse custom game
+                    const parsedGame = JSON.parse(customInput);
+                    currentGame = parsedGame;
+                    currentRootId = 'root';
+
+                    // Validate structure
+                    if (!currentGame[currentRootId]) {
+                        throw new Error('Custom game must have a "root" node');
+                    }
+                } else if (gameKey && CANONICAL_GAMES[gameKey]) {
+                    // Use canonical game
+                    const game = CANONICAL_GAMES[gameKey];
+                    currentGame = game.tree;
+                    currentRootId = game.rootId;
+                } else {
+                    throw new Error('Please select a canonical game or enter a custom game');
+                }
+
+                // Solve the game
+                equilibriumSolution = solveBackwardInduction(currentGame, currentRootId);
+
+                // Display results
+                displayResults(equilibriumSolution);
+
+                // Visualize tree
+                visualizeGameTree(currentGame, currentRootId, equilibriumSolution);
+
+            } catch (error) {
+                showError(error.message);
+                console.error(error);
+            }
+        });
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+
+        // Load default game on page load
+        window.addEventListener('load', function() {
+            document.getElementById('gameSelect').value = 'centipede';
+            document.getElementById('gameSelect').dispatchEvent(new Event('change'));
+        });
+
+    </script>
+</body>
+</html>
