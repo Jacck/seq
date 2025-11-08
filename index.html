@@ -257,6 +257,53 @@
                 </div>
 
                 <div class="section">
+                    <h3>Visual Game Builder</h3>
+                    <div class="info-box">
+                        <strong>Build Step-by-Step:</strong> Create your game tree visually by adding nodes and actions.
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label>Node Type:</label>
+                        <select id="nodeType">
+                            <option value="decision">Decision Node</option>
+                            <option value="terminal">Terminal Node</option>
+                        </select>
+                    </div>
+
+                    <div id="decisionNodeForm">
+                        <label for="nodeId">Node ID:</label>
+                        <input type="text" id="nodeId" placeholder="e.g., root, node1">
+
+                        <label for="playerName" style="margin-top: 10px;">Player Name:</label>
+                        <input type="text" id="playerName" placeholder="e.g., P1, P2">
+
+                        <label for="actionsList" style="margin-top: 10px;">Actions (comma-separated):</label>
+                        <input type="text" id="actionsList" placeholder="e.g., Left,Right or Accept,Reject">
+
+                        <label for="targetNodes" style="margin-top: 10px;">Target Nodes (comma-separated):</label>
+                        <input type="text" id="targetNodes" placeholder="e.g., node2,node3">
+                    </div>
+
+                    <div id="terminalNodeForm" style="display: none;">
+                        <label for="terminalNodeId">Node ID:</label>
+                        <input type="text" id="terminalNodeId" placeholder="e.g., terminal1">
+
+                        <label for="payoffs" style="margin-top: 10px;">Payoffs (comma-separated):</label>
+                        <input type="text" id="payoffs" placeholder="e.g., 3,1">
+                    </div>
+
+                    <button id="addNodeBtn" style="margin-top: 15px; margin-bottom: 15px;">➕ Add Node</button>
+                    <button id="clearBuilderBtn" style="margin-top: 15px; margin-bottom: 15px; background: #dc3545;">🗑️ Clear All</button>
+
+                    <div id="builderStatus" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-size: 12px; display: none;"></div>
+
+                    <div id="builtGamePreview" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px; max-height: 200px; overflow-y: auto; display: none;">
+                        <strong>Game Tree Structure:</strong>
+                        <pre id="builtGameJSON" style="margin-top: 5px; font-size: 11px; white-space: pre-wrap;"></pre>
+                    </div>
+                </div>
+
+                <div class="section">
                     <button id="solveBtn">🎯 Solve for SPNE</button>
                 </div>
             </div>
@@ -447,6 +494,71 @@
         let currentGame = null;
         let currentRootId = null;
         let equilibriumSolution = null;
+        let builtGame = {};
+        let builtGameRoot = null;
+
+        // ========================================
+        // VISUAL GAME BUILDER
+        // ========================================
+
+        function addNodeToBuilder(nodeData) {
+            if (nodeData.type === 'decision') {
+                // Add decision node
+                builtGame[nodeData.id] = {
+                    id: nodeData.id,
+                    player: nodeData.player,
+                    actions: nodeData.actions
+                };
+
+                // Set root if this is the first node
+                if (builtGameRoot === null) {
+                    builtGameRoot = nodeData.id;
+                }
+            } else if (nodeData.type === 'terminal') {
+                // Add terminal node
+                builtGame[nodeData.id] = {
+                    id: nodeData.id,
+                    payoffs: nodeData.payoffs
+                };
+            }
+
+            updateBuilderPreview();
+        }
+
+        function updateBuilderPreview() {
+            const preview = document.getElementById('builtGamePreview');
+            const previewJSON = document.getElementById('builtGameJSON');
+
+            if (Object.keys(builtGame).length > 0) {
+                previewJSON.textContent = JSON.stringify(builtGame, null, 2);
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        function clearBuilder() {
+            builtGame = {};
+            builtGameRoot = null;
+            updateBuilderPreview();
+            document.getElementById('builderStatus').style.display = 'none';
+
+            // Clear all input fields
+            document.getElementById('nodeId').value = '';
+            document.getElementById('playerName').value = '';
+            document.getElementById('actionsList').value = '';
+            document.getElementById('targetNodes').value = '';
+            document.getElementById('terminalNodeId').value = '';
+            document.getElementById('payoffs').value = '';
+        }
+
+        function showBuilderStatus(message, isError = false) {
+            const statusDiv = document.getElementById('builderStatus');
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = isError ? '#f8d7da' : '#d4edda';
+            statusDiv.style.color = isError ? '#721c24' : '#155724';
+        }
 
         // ========================================
         // BACKWARD INDUCTION ALGORITHM
@@ -765,6 +877,109 @@
         // UI EVENT HANDLERS
         // ========================================
 
+        // Node type selector
+        document.getElementById('nodeType').addEventListener('change', function(e) {
+            const nodeType = e.target.value;
+            const decisionForm = document.getElementById('decisionNodeForm');
+            const terminalForm = document.getElementById('terminalNodeForm');
+
+            if (nodeType === 'decision') {
+                decisionForm.style.display = 'block';
+                terminalForm.style.display = 'none';
+            } else {
+                decisionForm.style.display = 'none';
+                terminalForm.style.display = 'block';
+            }
+        });
+
+        // Add node button
+        document.getElementById('addNodeBtn').addEventListener('click', function() {
+            try {
+                const nodeType = document.getElementById('nodeType').value;
+
+                if (nodeType === 'decision') {
+                    const nodeId = document.getElementById('nodeId').value.trim();
+                    const player = document.getElementById('playerName').value.trim();
+                    const actionsStr = document.getElementById('actionsList').value.trim();
+                    const targetsStr = document.getElementById('targetNodes').value.trim();
+
+                    if (!nodeId || !player || !actionsStr || !targetsStr) {
+                        showBuilderStatus('Please fill in all fields for the decision node', true);
+                        return;
+                    }
+
+                    // Parse actions and targets
+                    const actions = actionsStr.split(',').map(a => a.trim());
+                    const targets = targetsStr.split(',').map(t => t.trim());
+
+                    if (actions.length !== targets.length) {
+                        showBuilderStatus('Number of actions must match number of target nodes', true);
+                        return;
+                    }
+
+                    // Create actions object
+                    const actionsObj = {};
+                    actions.forEach((action, index) => {
+                        actionsObj[action] = targets[index];
+                    });
+
+                    addNodeToBuilder({
+                        type: 'decision',
+                        id: nodeId,
+                        player: player,
+                        actions: actionsObj
+                    });
+
+                    showBuilderStatus(`Added decision node: ${nodeId}`, false);
+
+                    // Clear decision fields
+                    document.getElementById('nodeId').value = '';
+                    document.getElementById('playerName').value = '';
+                    document.getElementById('actionsList').value = '';
+                    document.getElementById('targetNodes').value = '';
+
+                } else {
+                    const nodeId = document.getElementById('terminalNodeId').value.trim();
+                    const payoffsStr = document.getElementById('payoffs').value.trim();
+
+                    if (!nodeId || !payoffsStr) {
+                        showBuilderStatus('Please fill in all fields for the terminal node', true);
+                        return;
+                    }
+
+                    // Parse payoffs
+                    const payoffs = payoffsStr.split(',').map(p => parseFloat(p.trim()));
+
+                    if (payoffs.some(isNaN)) {
+                        showBuilderStatus('All payoffs must be valid numbers', true);
+                        return;
+                    }
+
+                    addNodeToBuilder({
+                        type: 'terminal',
+                        id: nodeId,
+                        payoffs: payoffs
+                    });
+
+                    showBuilderStatus(`Added terminal node: ${nodeId}`, false);
+
+                    // Clear terminal fields
+                    document.getElementById('terminalNodeId').value = '';
+                    document.getElementById('payoffs').value = '';
+                }
+            } catch (error) {
+                showBuilderStatus('Error adding node: ' + error.message, true);
+            }
+        });
+
+        // Clear builder button
+        document.getElementById('clearBuilderBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all nodes from the builder?')) {
+                clearBuilder();
+                showBuilderStatus('Builder cleared', false);
+            }
+        });
+
         document.getElementById('gameSelect').addEventListener('change', function(e) {
             const gameKey = e.target.value;
             const descDiv = document.getElementById('gameDescription');
@@ -774,10 +989,35 @@
                 descDiv.innerHTML = `<strong>${game.name}:</strong> ${game.description}`;
                 descDiv.style.display = 'block';
 
-                // Clear custom input
+                // Clear custom input and builder
                 document.getElementById('customGame').value = '';
+                if (Object.keys(builtGame).length > 0) {
+                    builtGame = {};
+                    builtGameRoot = null;
+                    updateBuilderPreview();
+                }
+
+                // Automatically load and solve the selected game
+                currentGame = game.tree;
+                currentRootId = game.rootId;
+                equilibriumSolution = solveBackwardInduction(currentGame, currentRootId);
+                displayResults(equilibriumSolution);
+                visualizeGameTree(currentGame, currentRootId, equilibriumSolution);
             } else {
                 descDiv.style.display = 'none';
+                // Clear visualization when no game is selected
+                document.getElementById('gameTree').innerHTML = '';
+                document.getElementById('resultsContainer').style.display = 'none';
+                document.getElementById('errorContainer').style.display = 'none';
+            }
+        });
+
+        // Clear builder when custom JSON is entered
+        document.getElementById('customGame').addEventListener('input', function() {
+            if (this.value.trim() && Object.keys(builtGame).length > 0) {
+                builtGame = {};
+                builtGameRoot = null;
+                updateBuilderPreview();
             }
         });
 
@@ -787,7 +1027,7 @@
                 const customInput = document.getElementById('customGame').value.trim();
 
                 if (customInput) {
-                    // Parse custom game
+                    // Parse custom game from JSON
                     const parsedGame = JSON.parse(customInput);
                     currentGame = parsedGame;
                     currentRootId = 'root';
@@ -796,13 +1036,17 @@
                     if (!currentGame[currentRootId]) {
                         throw new Error('Custom game must have a "root" node');
                     }
+                } else if (Object.keys(builtGame).length > 0 && builtGameRoot) {
+                    // Use built game
+                    currentGame = builtGame;
+                    currentRootId = builtGameRoot;
                 } else if (gameKey && CANONICAL_GAMES[gameKey]) {
                     // Use canonical game
                     const game = CANONICAL_GAMES[gameKey];
                     currentGame = game.tree;
                     currentRootId = game.rootId;
                 } else {
-                    throw new Error('Please select a canonical game or enter a custom game');
+                    throw new Error('Please select a canonical game, enter a custom game, or build a game using the visual builder');
                 }
 
                 // Solve the game
