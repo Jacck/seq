@@ -643,6 +643,10 @@
 
         function getPlayerIndex(player) {
             // Extract player number or use mapping
+            if (!player || typeof player !== 'string') {
+                return 0; // Default to first player if invalid
+            }
+
             if (player.includes('1') || player.toLowerCase().includes('p1') ||
                 player.toLowerCase().includes('entrant') ||
                 player.toLowerCase().includes('proposer') ||
@@ -1069,10 +1073,22 @@
                 if (customInput) {
                     // Parse custom game from JSON
                     const parsedGame = JSON.parse(customInput);
-                    currentGame = parsedGame;
 
-                    // Auto-detect root node
-                    currentRootId = findRootNode(currentGame);
+                    // Check if the JSON has a "root" property that's a string (pointer to root node)
+                    if (parsedGame.root && typeof parsedGame.root === 'string') {
+                        currentRootId = parsedGame.root;
+                        // Create a copy without the "root" property
+                        currentGame = {};
+                        for (const [key, value] of Object.entries(parsedGame)) {
+                            if (key !== 'root') {
+                                currentGame[key] = value;
+                            }
+                        }
+                    } else {
+                        currentGame = parsedGame;
+                        // Auto-detect root node
+                        currentRootId = findRootNode(currentGame);
+                    }
 
                     // Validate structure
                     if (!currentGame[currentRootId]) {
