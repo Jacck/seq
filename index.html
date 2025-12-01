@@ -305,6 +305,13 @@
 
                 <div class="section">
                     <button id="solveBtn">🎯 Solve for SPNE</button>
+                    <button id="exportBtn" style="margin-top: 10px; background: #17a2b8;">📋 Export Current Game as JSON</button>
+                </div>
+
+                <div class="section" id="exportedJsonSection" style="display: none;">
+                    <h3>Exported JSON</h3>
+                    <textarea id="exportedJson" readonly style="min-height: 200px; background: #f8f9fa;"></textarea>
+                    <button id="copyJsonBtn" style="margin-top: 10px; background: #28a745;">📋 Copy to Clipboard</button>
                 </div>
             </div>
 
@@ -837,6 +844,39 @@
         }
 
         // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
+
+        function findRootNode(gameTree) {
+            // Find the root node by looking for a node that isn't referenced as a child
+            const allNodes = new Set(Object.keys(gameTree));
+            const childNodes = new Set();
+
+            // Collect all nodes that are children of other nodes
+            for (const node of Object.values(gameTree)) {
+                if (node.actions) {
+                    for (const childId of Object.values(node.actions)) {
+                        childNodes.add(childId);
+                    }
+                }
+            }
+
+            // The root node is the one that's not a child of any other node
+            for (const nodeId of allNodes) {
+                if (!childNodes.has(nodeId)) {
+                    return nodeId;
+                }
+            }
+
+            // Fallback: try common root names
+            if (gameTree['root']) return 'root';
+            if (gameTree['n1']) return 'n1';
+
+            // Last resort: return the first node
+            return Object.keys(gameTree)[0];
+        }
+
+        // ========================================
         // RESULTS DISPLAY
         // ========================================
 
@@ -1030,11 +1070,13 @@
                     // Parse custom game from JSON
                     const parsedGame = JSON.parse(customInput);
                     currentGame = parsedGame;
-                    currentRootId = 'root';
+
+                    // Auto-detect root node
+                    currentRootId = findRootNode(currentGame);
 
                     // Validate structure
                     if (!currentGame[currentRootId]) {
-                        throw new Error('Custom game must have a "root" node');
+                        throw new Error('Could not find valid root node in game tree');
                     }
                 } else if (Object.keys(builtGame).length > 0 && builtGameRoot) {
                     // Use built game
@@ -1062,6 +1104,45 @@
                 showError(error.message);
                 console.error(error);
             }
+        });
+
+        // Export JSON button
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            try {
+                if (!currentGame || !currentRootId) {
+                    showError('No game loaded. Please select or create a game first.');
+                    return;
+                }
+
+                // Export the current game tree
+                const exportedData = {
+                    gameTree: currentGame,
+                    rootId: currentRootId
+                };
+
+                const jsonString = JSON.stringify(currentGame, null, 2);
+                document.getElementById('exportedJson').value = jsonString;
+                document.getElementById('exportedJsonSection').style.display = 'block';
+
+                // Scroll to the exported JSON
+                document.getElementById('exportedJsonSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } catch (error) {
+                showError('Error exporting game: ' + error.message);
+            }
+        });
+
+        // Copy JSON button
+        document.getElementById('copyJsonBtn').addEventListener('click', function() {
+            const jsonTextarea = document.getElementById('exportedJson');
+            jsonTextarea.select();
+            document.execCommand('copy');
+
+            // Visual feedback
+            const originalText = this.textContent;
+            this.textContent = '✅ Copied!';
+            setTimeout(() => {
+                this.textContent = originalText;
+            }, 2000);
         });
 
         // ========================================
