@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seq App Playground - Interactive Game Theory Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            color: white;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .nav-tab:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .section h3 {
+            color: #9d8df1;
+            margin: 25px 0 15px;
+            font-size: 1.3em;
+        }
+
+        .section p {
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .card.highlight {
+            border-left-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .card.warning {
+            border-left-color: #ffc107;
+            background: rgba(255, 193, 7, 0.1);
+        }
+
+        .card.info {
+            border-left-color: #17a2b8;
+            background: rgba(23, 162, 184, 0.1);
+        }
+
+        /* Code blocks */
+        pre, code {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+        }
+
+        code {
+            padding: 2px 6px;
+            color: #f8d7da;
+        }
+
+        pre {
+            padding: 15px;
+            overflow-x: auto;
+            margin: 15px 0;
+            line-height: 1.5;
+        }
+
+        /* Interactive Demo Area */
+        .demo-area {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        /* Game Tree Visualization */
+        .tree-container {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 10px;
+            margin: 20px 0;
+        }
+
+        #demoTree {
+            width: 100%;
+            height: 400px;
+        }
+
+        /* Step indicator */
+        .step-indicator {
+            display: flex;
+            gap: 5px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: scale(1.1);
+        }
+
+        .step.completed {
+            background: #28a745;
+        }
+
+        /* Algorithm visualization */
+        .algorithm-step {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 3px solid #667eea;
+            display: none;
+        }
+
+        .algorithm-step.visible {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Results display */
+        .results-box {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(23, 162, 184, 0.2) 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .results-box h4 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        /* Grid layout */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Feature list */
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        /* Concept box */
+        .concept-box {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 15px;
+            align-items: center;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .concept-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        /* Link to main app */
+        .app-link {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+
+        .app-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            cursor: help;
+            border-bottom: 1px dashed #667eea;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Seq App Playground</h1>
+            <p>Learn Game Theory & Backward Induction Interactively</p>
+        </header>
+
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-section="overview">Overview</div>
+            <div class="nav-tab" data-section="concepts">Key Concepts</div>
+            <div class="nav-tab" data-section="algorithm">Algorithm Demo</div>
+            <div class="nav-tab" data-section="examples">Example Games</div>
+            <div class="nav-tab" data-section="try-it">Try It Yourself</div>
+        </div>
+
+        <!-- OVERVIEW SECTION -->
+        <div class="section active" id="overview">
+            <h2>What is the Seq App?</h2>
+
+            <p>The <strong>Sequential Game Solver</strong> is an educational tool that computes the <span class="tooltip" data-tip="The optimal strategy profile where no player can improve by deviating">Subgame Perfect Nash Equilibrium (SPNE)</span> for sequential games using backward induction.</p>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h3>What It Does</h3>
+                    <ul class="feature-list">
+                        <li>Solves sequential games automatically</li>
+                        <li>Visualizes game trees with optimal paths</li>
+                        <li>Shows step-by-step equilibrium computation</li>
+                        <li>Supports custom game definitions</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Who It's For</h3>
+                    <ul class="feature-list">
+                        <li>Economics & Game Theory students</li>
+                        <li>Researchers analyzing strategic interactions</li>
+                        <li>Anyone learning about decision making</li>
+                        <li>Educators teaching game theory</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>How It Works</h3>
+            <div class="concept-box">
+                <div class="concept-icon">1</div>
+                <div>
+                    <strong>Define a Game</strong><br>
+                    Select a pre-built game, paste JSON, or build visually
+                </div>
+            </div>
+            <div class="concept-box">
+                <div class="concept-icon">2</div>
+                <div>
+                    <strong>Solve with Backward Induction</strong><br>
+                    Algorithm works from terminal nodes back to root
+                </div>
+            </div>
+            <div class="concept-box">
+                <div class="concept-icon">3</div>
+                <div>
+                    <strong>View Results</strong><br>
+                    See optimal strategies, equilibrium path, and payoffs
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="index.html" class="app-link">Launch the Full App</a>
+            </div>
+        </div>
+
+        <!-- CONCEPTS SECTION -->
+        <div class="section" id="concepts">
+            <h2>Key Game Theory Concepts</h2>
+
+            <h3>Sequential Games</h3>
+            <p>In a <strong>sequential game</strong>, players move one at a time, and later players can observe what earlier players did. This is different from simultaneous games where players choose actions without knowing others' choices.</p>
+
+            <div class="card info">
+                <strong>Real-world examples:</strong> Chess, negotiations, market entry decisions, ultimatum bargaining
+            </div>
+
+            <h3>Game Tree Representation</h3>
+            <p>Sequential games are represented as <strong>extensive-form games</strong> using a tree structure:</p>
+
+            <table>
+                <tr>
+                    <th>Element</th>
+                    <th>Description</th>
+                    <th>Visual</th>
+                </tr>
+                <tr>
+                    <td><strong>Decision Node</strong></td>
+                    <td>A point where a player makes a choice</td>
+                    <td>Circle with player name</td>
+                </tr>
+                <tr>
+                    <td><strong>Terminal Node</strong></td>
+                    <td>End of game with payoffs for all players</td>
+                    <td>Circle with (P1, P2) values</td>
+                </tr>
+                <tr>
+                    <td><strong>Edge/Branch</strong></td>
+                    <td>An action connecting nodes</td>
+                    <td>Line with action label</td>
+                </tr>
+                <tr>
+                    <td><strong>Root</strong></td>
+                    <td>Starting node of the game</td>
+                    <td>Topmost node</td>
+                </tr>
+            </table>
+
+            <h3>Subgame Perfect Nash Equilibrium (SPNE)</h3>
+            <p>SPNE is the solution concept for sequential games. A strategy profile is SPNE if it constitutes a Nash Equilibrium in every subgame (including the game itself).</p>
+
+            <div class="card highlight">
+                <strong>Key insight:</strong> SPNE eliminates non-credible threats. A player won't threaten an action that hurts themselves if they actually have to carry it out.
+            </div>
+
+            <h3>Backward Induction</h3>
+            <p>The algorithm to find SPNE:</p>
+            <ol style="margin-left: 20px; line-height: 2;">
+                <li>Start at <strong>terminal nodes</strong> (end of game)</li>
+                <li>Move to <strong>preceding decision nodes</strong></li>
+                <li>At each node, the player picks the action that <strong>maximizes their payoff</strong></li>
+                <li>Replace the node with its computed value</li>
+                <li>Repeat until reaching the <strong>root node</strong></li>
+            </ol>
+
+            <div class="card warning">
+                <strong>Why backward?</strong> Players look ahead to predict what will happen, then reason backwards to determine their current optimal choice.
+            </div>
+        </div>
+
+        <!-- ALGORITHM DEMO SECTION -->
+        <div class="section" id="algorithm">
+            <h2>Backward Induction - Step by Step</h2>
+
+            <p>Watch the backward induction algorithm solve the <strong>Entry Deterrence Game</strong> step by step.</p>
+
+            <div class="card info">
+                <strong>The Game:</strong> An Entrant decides whether to Enter a market or Stay Out. If they Enter, the Incumbent decides to Fight (costly for both) or Accommodate (share the market).
+            </div>
+
+            <div class="demo-area">
+                <div class="demo-controls">
+                    <button class="btn-primary" id="startDemo">Start Demo</button>
+                    <button class="btn-secondary" id="nextStep">Next Step</button>
+                    <button class="btn-secondary" id="resetDemo">Reset</button>
+                </div>
+
+                <div class="step-indicator">
+                    <div class="step" data-step="1">1</div>
+                    <div class="step" data-step="2">2</div>
+                    <div class="step" data-step="3">3</div>
+                    <div class="step" data-step="4">4</div>
+                </div>
+
+                <div class="tree-container">
+                    <svg id="demoTree"></svg>
+                </div>
+
+                <div id="algorithmSteps">
+                    <div class="algorithm-step" data-step="1">
+                        <h4>Step 1: Identify Terminal Nodes</h4>
+                        <p>We start by identifying all terminal nodes (game endings):</p>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Stay Out:</strong> Payoffs (0, 5) - Entrant gets 0, Incumbent keeps monopoly profit 5</li>
+                            <li><strong>Fight:</strong> Payoffs (-1, -1) - Both lose from price war</li>
+                            <li><strong>Accommodate:</strong> Payoffs (2, 2) - Both share market profits</li>
+                        </ul>
+                    </div>
+
+                    <div class="algorithm-step" data-step="2">
+                        <h4>Step 2: Solve Incumbent's Decision</h4>
+                        <p>At the Incumbent's node, they choose between:</p>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Fight:</strong> Gets payoff -1</li>
+                            <li><strong>Accommodate:</strong> Gets payoff 2</li>
+                        </ul>
+                        <p><strong>Optimal choice: Accommodate</strong> (2 > -1)</p>
+                        <div class="card highlight">
+                            This reveals that "Fight" is a <strong>non-credible threat</strong>. The Incumbent won't actually fight because it hurts them too!
+                        </div>
+                    </div>
+
+                    <div class="algorithm-step" data-step="3">
+                        <h4>Step 3: Solve Entrant's Decision</h4>
+                        <p>Now the Entrant knows the Incumbent will Accommodate if they Enter:</p>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Stay Out:</strong> Gets payoff 0</li>
+                            <li><strong>Enter:</strong> Gets payoff 2 (since Incumbent accommodates)</li>
+                        </ul>
+                        <p><strong>Optimal choice: Enter</strong> (2 > 0)</p>
+                    </div>
+
+                    <div class="algorithm-step" data-step="4">
+                        <h4>Step 4: SPNE Solution</h4>
+                        <div class="results-box">
+                            <h4>Subgame Perfect Nash Equilibrium</h4>
+                            <p><strong>Equilibrium Strategies:</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li>Entrant: Choose "Enter"</li>
+                                <li>Incumbent: Choose "Accommodate"</li>
+                            </ul>
+                            <p><strong>Equilibrium Path:</strong> Enter → Accommodate</p>
+                            <p><strong>Final Payoffs:</strong> (2, 2)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXAMPLES SECTION -->
+        <div class="section" id="examples">
+            <h2>Example Games</h2>
+
+            <p>The seq app includes four canonical games from game theory literature:</p>
+
+            <div class="card">
+                <h3>1. Centipede Game</h3>
+                <p>Two players alternate between "Take" (end game with current pot) and "Pass" (grow the pot). The pot grows each round, but passing risks the other player taking everything.</p>
+                <div class="grid-2">
+                    <div>
+                        <strong>SPNE Result:</strong> Player 1 takes immediately at the first node.
+                    </div>
+                    <div>
+                        <strong>Paradox:</strong> Despite mutual gains from cooperation, backward induction predicts immediate defection.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>2. Entry Deterrence (Selten Game)</h3>
+                <p>Classic example of credible vs. non-credible threats. An incumbent threatens to fight entrants, but fighting is costly.</p>
+                <div class="grid-2">
+                    <div>
+                        <strong>SPNE Result:</strong> Entrant enters, Incumbent accommodates.
+                    </div>
+                    <div>
+                        <strong>Insight:</strong> Threats must be credible to deter entry.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>3. Stackelberg Duopoly</h3>
+                <p>Leader firm chooses output quantity first, Follower responds. Demonstrates first-mover advantage in oligopoly markets.</p>
+                <div class="grid-2">
+                    <div>
+                        <strong>SPNE Result:</strong> Leader chooses High, Follower chooses Low.
+                    </div>
+                    <div>
+                        <strong>Insight:</strong> First-mover can commit to aggressive strategy.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>4. Ultimatum Game</h3>
+                <p>Proposer offers a split of $10, Responder accepts or rejects (both get nothing if rejected).</p>
+                <div class="grid-2">
+                    <div>
+                        <strong>SPNE Result:</strong> Proposer offers minimum, Responder accepts any positive amount.
+                    </div>
+                    <div>
+                        <strong>Paradox:</strong> Humans often reject "unfair" offers, deviating from SPNE.
+                    </div>
+                </div>
+            </div>
+
+            <h3>JSON Format for Custom Games</h3>
+            <p>Define your own games using this structure:</p>
+            <pre>{
+  "root": {
+    "id": "root",
+    "player": "P1",
+    "actions": {
+      "Left": "node2",
+      "Right": "terminal1"
+    }
+  },
+  "node2": {
+    "id": "node2",
+    "player": "P2",
+    "actions": {
+      "Up": "terminal2",
+      "Down": "terminal3"
+    }
+  },
+  "terminal1": { "id": "terminal1", "payoffs": [3, 1] },
+  "terminal2": { "id": "terminal2", "payoffs": [2, 4] },
+  "terminal3": { "id": "terminal3", "payoffs": [1, 2] }
+}</pre>
+        </div>
+
+        <!-- TRY IT SECTION -->
+        <div class="section" id="try-it">
+            <h2>Try It Yourself</h2>
+
+            <p>Create a simple game and see backward induction in action!</p>
+
+            <div class="demo-area">
+                <h3>Mini Game Builder</h3>
+
+                <div class="grid-2">
+                    <div>
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold;">Select a scenario:</label>
+                        <select id="scenarioSelect" style="width: 100%; padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                            <option value="investment">Investment Decision</option>
+                            <option value="negotiation">Simple Negotiation</option>
+                            <option value="trust">Trust Game</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="btn-success" id="solveScenario" style="width: 100%; height: 100%;">Solve This Game</button>
+                    </div>
+                </div>
+
+                <div id="scenarioDescription" class="card info" style="margin-top: 20px;">
+                    <strong>Investment Decision:</strong> Player 1 decides to Invest or Not. If they invest, Player 2 decides to Cooperate (share returns) or Defect (keep everything).
+                </div>
+
+                <div class="tree-container" style="margin-top: 20px;">
+                    <svg id="tryItTree"></svg>
+                </div>
+
+                <div id="tryItResults" class="results-box" style="display: none;">
+                    <h4>Solution</h4>
+                    <div id="tryItResultsContent"></div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <p>Want more control? Use the full application with custom JSON input and visual builder.</p>
+                <a href="index.html" class="app-link">Open Full Seq App</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // NAVIGATION
+        // ========================================
+
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Update active tab
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Show corresponding section
+                const sectionId = this.dataset.section;
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+            });
+        });
+
+        // ========================================
+        // ALGORITHM DEMO
+        // ========================================
+
+        let currentStep = 0;
+        const totalSteps = 4;
+
+        const entryDeterrenceGame = {
+            "entry": {
+                id: "entry",
+                player: "Entrant",
+                actions: { "Enter": "incumbent", "Stay Out": "stayOut" }
+            },
+            "incumbent": {
+                id: "incumbent",
+                player: "Incumbent",
+                actions: { "Fight": "fight", "Accommodate": "accommodate" }
+            },
+            "stayOut": { id: "stayOut", payoffs: [0, 5] },
+            "fight": { id: "fight", payoffs: [-1, -1] },
+            "accommodate": { id: "accommodate", payoffs: [2, 2] }
+        };
+
+        function drawDemoTree(highlightNodes = [], optimalEdges = []) {
+            const svg = document.getElementById('demoTree');
+            const width = svg.clientWidth || 700;
+            const height = 380;
+
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            svg.innerHTML = '';
+
+            // Node positions
+            const positions = {
+                entry: { x: width / 2, y: 50 },
+                incumbent: { x: width / 2 + 120, y: 180 },
+                stayOut: { x: width / 2 - 120, y: 180 },
+                fight: { x: width / 2 + 40, y: 320 },
+                accommodate: { x: width / 2 + 200, y: 320 }
+            };
+
+            // Draw edges
+            const edges = [
+                { from: 'entry', to: 'stayOut', label: 'Stay Out' },
+                { from: 'entry', to: 'incumbent', label: 'Enter' },
+                { from: 'incumbent', to: 'fight', label: 'Fight' },
+                { from: 'incumbent', to: 'accommodate', label: 'Accommodate' }
+            ];
+
+            edges.forEach(edge => {
+                const from = positions[edge.from];
+                const to = positions[edge.to];
+                const isOptimal = optimalEdges.includes(`${edge.from}-${edge.to}`);
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', from.x);
+                line.setAttribute('y1', from.y);
+                line.setAttribute('x2', to.x);
+                line.setAttribute('y2', to.y);
+                line.setAttribute('stroke', isOptimal ? '#28a745' : '#666');
+                line.setAttribute('stroke-width', isOptimal ? '4' : '2');
+                line.setAttribute('stroke-dasharray', isOptimal ? 'none' : '5,5');
+                svg.appendChild(line);
+
+                // Label
+                const midX = (from.x + to.x) / 2;
+                const midY = (from.y + to.y) / 2 - 10;
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', midX);
+                text.setAttribute('y', midY);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-size', '12');
+                text.setAttribute('fill', isOptimal ? '#28a745' : '#333');
+                text.setAttribute('font-weight', isOptimal ? 'bold' : 'normal');
+                text.textContent = edge.label;
+                svg.appendChild(text);
+            });
+
+            // Draw nodes
+            Object.entries(entryDeterrenceGame).forEach(([nodeId, node]) => {
+                const pos = positions[nodeId];
+                const isHighlighted = highlightNodes.includes(nodeId);
+                const isTerminal = !!node.payoffs;
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', pos.x);
+                circle.setAttribute('cy', pos.y);
+                circle.setAttribute('r', isTerminal ? '28' : '24');
+
+                if (isHighlighted) {
+                    circle.setAttribute('fill', '#d4edda');
+                    circle.setAttribute('stroke', '#28a745');
+                    circle.setAttribute('stroke-width', '4');
+                } else {
+                    circle.setAttribute('fill', isTerminal ? '#fff3cd' : '#e7f3ff');
+                    circle.setAttribute('stroke', '#667eea');
+                    circle.setAttribute('stroke-width', '2');
+                }
+                svg.appendChild(circle);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', pos.x);
+                text.setAttribute('y', pos.y + 5);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-size', '11');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('fill', '#333');
+                text.textContent = isTerminal ? `(${node.payoffs.join(',')})` : node.player;
+                svg.appendChild(text);
+            });
+        }
+
+        function updateDemo() {
+            // Update step indicators
+            document.querySelectorAll('.step').forEach(s => {
+                const stepNum = parseInt(s.dataset.step);
+                s.classList.remove('active', 'completed');
+                if (stepNum === currentStep) s.classList.add('active');
+                if (stepNum < currentStep) s.classList.add('completed');
+            });
+
+            // Update algorithm steps visibility
+            document.querySelectorAll('.algorithm-step').forEach(s => {
+                const stepNum = parseInt(s.dataset.step);
+                s.classList.toggle('visible', stepNum <= currentStep);
+            });
+
+            // Update tree visualization
+            let highlightNodes = [];
+            let optimalEdges = [];
+
+            if (currentStep >= 1) {
+                highlightNodes = ['stayOut', 'fight', 'accommodate'];
+            }
+            if (currentStep >= 2) {
+                highlightNodes = ['incumbent', 'accommodate'];
+                optimalEdges = ['incumbent-accommodate'];
+            }
+            if (currentStep >= 3) {
+                highlightNodes = ['entry', 'incumbent', 'accommodate'];
+                optimalEdges = ['entry-incumbent', 'incumbent-accommodate'];
+            }
+            if (currentStep >= 4) {
+                highlightNodes = ['entry', 'incumbent', 'accommodate'];
+                optimalEdges = ['entry-incumbent', 'incumbent-accommodate'];
+            }
+
+            drawDemoTree(highlightNodes, optimalEdges);
+        }
+
+        document.getElementById('startDemo').addEventListener('click', () => {
+            currentStep = 1;
+            updateDemo();
+        });
+
+        document.getElementById('nextStep').addEventListener('click', () => {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateDemo();
+            }
+        });
+
+        document.getElementById('resetDemo').addEventListener('click', () => {
+            currentStep = 0;
+            updateDemo();
+        });
+
+        // ========================================
+        // TRY IT YOURSELF
+        // ========================================
+
+        const scenarios = {
+            investment: {
+                description: '<strong>Investment Decision:</strong> Player 1 decides to Invest or Not. If they invest, Player 2 decides to Cooperate (share returns) or Defect (keep everything).',
+                tree: {
+                    "p1": { id: "p1", player: "Investor", actions: { "Invest": "p2", "Not Invest": "t1" } },
+                    "p2": { id: "p2", player: "Partner", actions: { "Cooperate": "t2", "Defect": "t3" } },
+                    "t1": { id: "t1", payoffs: [0, 0] },
+                    "t2": { id: "t2", payoffs: [3, 3] },
+                    "t3": { id: "t3", payoffs: [-2, 5] }
+                },
+                root: "p1",
+                solution: {
+                    strategies: { "p1": "Not Invest", "p2": "Defect" },
+                    path: "Not Invest",
+                    payoffs: [0, 0],
+                    explanation: "Partner will Defect (5 > 3), so Investor chooses Not Invest (0 > -2). Trust breaks down due to lack of commitment!"
+                }
+            },
+            negotiation: {
+                description: '<strong>Simple Negotiation:</strong> Seller offers High or Low price. Buyer then decides to Accept or Reject.',
+                tree: {
+                    "seller": { id: "seller", player: "Seller", actions: { "High Price": "buyer_h", "Low Price": "buyer_l" } },
+                    "buyer_h": { id: "buyer_h", player: "Buyer", actions: { "Accept": "t1", "Reject": "t2" } },
+                    "buyer_l": { id: "buyer_l", player: "Buyer", actions: { "Accept": "t3", "Reject": "t4" } },
+                    "t1": { id: "t1", payoffs: [8, 2] },
+                    "t2": { id: "t2", payoffs: [0, 0] },
+                    "t3": { id: "t3", payoffs: [4, 6] },
+                    "t4": { id: "t4", payoffs: [0, 0] }
+                },
+                root: "seller",
+                solution: {
+                    strategies: { "seller": "High Price", "buyer_h": "Accept", "buyer_l": "Accept" },
+                    path: "High Price → Accept",
+                    payoffs: [8, 2],
+                    explanation: "Buyer accepts any deal (something > nothing). Seller exploits this with High Price."
+                }
+            },
+            trust: {
+                description: '<strong>Trust Game:</strong> Player 1 can Trust or Not Trust. If trusted, Player 2 can Honor the trust or Betray.',
+                tree: {
+                    "p1": { id: "p1", player: "Truster", actions: { "Trust": "p2", "Don't Trust": "t1" } },
+                    "p2": { id: "p2", player: "Trustee", actions: { "Honor": "t2", "Betray": "t3" } },
+                    "t1": { id: "t1", payoffs: [1, 1] },
+                    "t2": { id: "t2", payoffs: [3, 3] },
+                    "t3": { id: "t3", payoffs: [0, 4] }
+                },
+                root: "p1",
+                solution: {
+                    strategies: { "p1": "Don't Trust", "p2": "Betray" },
+                    path: "Don't Trust",
+                    payoffs: [1, 1],
+                    explanation: "Trustee will Betray (4 > 3), so Truster doesn't trust (1 > 0). Another trust paradox!"
+                }
+            }
+        };
+
+        function drawTryItTree(scenario, showSolution = false) {
+            const svg = document.getElementById('tryItTree');
+            const width = svg.clientWidth || 700;
+            const height = 350;
+
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            svg.innerHTML = '';
+
+            const game = scenario.tree;
+            const nodes = Object.keys(game);
+
+            // Calculate positions using BFS
+            const positions = {};
+            const levels = {};
+            const queue = [{ id: scenario.root, level: 0 }];
+            const visited = new Set();
+
+            while (queue.length > 0) {
+                const { id, level } = queue.shift();
+                if (visited.has(id)) continue;
+                visited.add(id);
+
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(id);
+
+                const node = game[id];
+                if (node.actions) {
+                    for (const nextId of Object.values(node.actions)) {
+                        queue.push({ id: nextId, level: level + 1 });
+                    }
+                }
+            }
+
+            const maxLevel = Math.max(...Object.keys(levels).map(Number));
+            const verticalSpacing = (height - 80) / Math.max(maxLevel, 1);
+
+            for (const [level, nodeIds] of Object.entries(levels)) {
+                const levelNum = Number(level);
+                const horizontalSpacing = width / (nodeIds.length + 1);
+                nodeIds.forEach((nodeId, index) => {
+                    positions[nodeId] = {
+                        x: horizontalSpacing * (index + 1),
+                        y: 40 + verticalSpacing * levelNum
+                    };
+                });
+            }
+
+            // Draw edges
+            for (const [nodeId, node] of Object.entries(game)) {
+                if (!node.actions) continue;
+
+                const fromPos = positions[nodeId];
+                const optimalAction = showSolution ? scenario.solution.strategies[nodeId] : null;
+
+                for (const [action, toNodeId] of Object.entries(node.actions)) {
+                    const toPos = positions[toNodeId];
+                    const isOptimal = action === optimalAction;
+
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', fromPos.x);
+                    line.setAttribute('y1', fromPos.y);
+                    line.setAttribute('x2', toPos.x);
+                    line.setAttribute('y2', toPos.y);
+                    line.setAttribute('stroke', isOptimal ? '#28a745' : '#666');
+                    line.setAttribute('stroke-width', isOptimal ? '4' : '2');
+                    line.setAttribute('stroke-dasharray', isOptimal ? 'none' : '5,5');
+                    svg.appendChild(line);
+
+                    const midX = (fromPos.x + toPos.x) / 2;
+                    const midY = (fromPos.y + toPos.y) / 2 - 8;
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', midX);
+                    text.setAttribute('y', midY);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('font-size', '11');
+                    text.setAttribute('fill', isOptimal ? '#28a745' : '#333');
+                    text.setAttribute('font-weight', isOptimal ? 'bold' : 'normal');
+                    text.textContent = action;
+                    svg.appendChild(text);
+                }
+            }
+
+            // Draw nodes
+            for (const [nodeId, node] of Object.entries(game)) {
+                const pos = positions[nodeId];
+                const isTerminal = !!node.payoffs;
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', pos.x);
+                circle.setAttribute('cy', pos.y);
+                circle.setAttribute('r', isTerminal ? '26' : '22');
+                circle.setAttribute('fill', isTerminal ? '#fff3cd' : '#e7f3ff');
+                circle.setAttribute('stroke', '#667eea');
+                circle.setAttribute('stroke-width', '2');
+                svg.appendChild(circle);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', pos.x);
+                text.setAttribute('y', pos.y + 4);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-size', '10');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('fill', '#333');
+                text.textContent = isTerminal ? `(${node.payoffs.join(',')})` : node.player;
+                svg.appendChild(text);
+            }
+        }
+
+        document.getElementById('scenarioSelect').addEventListener('change', function() {
+            const scenario = scenarios[this.value];
+            document.getElementById('scenarioDescription').innerHTML = scenario.description;
+            document.getElementById('tryItResults').style.display = 'none';
+            drawTryItTree(scenario, false);
+        });
+
+        document.getElementById('solveScenario').addEventListener('click', function() {
+            const scenarioKey = document.getElementById('scenarioSelect').value;
+            const scenario = scenarios[scenarioKey];
+
+            drawTryItTree(scenario, true);
+
+            const resultsDiv = document.getElementById('tryItResults');
+            const contentDiv = document.getElementById('tryItResultsContent');
+
+            contentDiv.innerHTML = `
+                <p><strong>Optimal Strategies:</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 10px;">
+                    ${Object.entries(scenario.solution.strategies).map(([node, action]) =>
+                        `<li>At ${scenario.tree[node].player}: ${action}</li>`
+                    ).join('')}
+                </ul>
+                <p><strong>Equilibrium Path:</strong> ${scenario.solution.path}</p>
+                <p><strong>Final Payoffs:</strong> (${scenario.solution.payoffs.join(', ')})</p>
+                <div class="card warning" style="margin-top: 15px;">
+                    <strong>Insight:</strong> ${scenario.solution.explanation}
+                </div>
+            `;
+
+            resultsDiv.style.display = 'block';
+        });
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+
+        window.addEventListener('load', function() {
+            // Initialize algorithm demo
+            drawDemoTree();
+
+            // Initialize try-it section
+            const defaultScenario = scenarios['investment'];
+            document.getElementById('scenarioDescription').innerHTML = defaultScenario.description;
+            setTimeout(() => drawTryItTree(defaultScenario, false), 100);
+        });
+
+        // Redraw on resize
+        window.addEventListener('resize', function() {
+            if (document.getElementById('algorithm').classList.contains('active')) {
+                updateDemo();
+            }
+            if (document.getElementById('try-it').classList.contains('active')) {
+                const scenarioKey = document.getElementById('scenarioSelect').value;
+                const showSolution = document.getElementById('tryItResults').style.display !== 'none';
+                drawTryItTree(scenarios[scenarioKey], showSolution);
+            }
+        });
+    </script>
+</body>
+</html>
